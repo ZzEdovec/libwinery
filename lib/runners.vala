@@ -52,7 +52,7 @@ namespace Winery {
             );
         }
 
-        public async Runner download (Cancellable cancellable) throws GLib.Error {
+        public async Runner download (Cancellable? cancellable = null) throws GLib.Error {
             if (!runner_type.is_a (typeof (Runner)))
                 throw new Error.RUNNER_TYPE_IS_NOT_A_RUNNER ("Runner type is not a Runner interface");
 
@@ -105,7 +105,7 @@ namespace Winery {
                 download_progress (RunnerStatus.UNPACKING, -1);
 
                 var extr_thread = new Thread<File?> (null, () => {
-                    var file = extract (archive);
+                    var file = extract (archive, cancellable);
                     Idle.add_once (() => { download.callback (); });
                     return file;
                 });
@@ -147,7 +147,7 @@ namespace Winery {
             Archive.Result last_result;
             string? first_entry_name = null;
             while ((last_result = arc_reader.next_header (out entry)) == Archive.Result.OK) {
-                if (cancellable != null && cancellable.is_cancelled ())
+                if ((cancellable != null && cancellable.is_cancelled ()) || (first_entry_name == null && entry.filetype () != Archive.FileType.IFDIR))
                     return null;
 
                 if (first_entry_name == null)
